@@ -1,51 +1,30 @@
-// We need a vue instance to handle reactivity
-var vm = null;
+import * as Vue from 'vue'
 
 // The plugin
 const VueTranslate = {
 
     // Install the method
-    install(Vue) {
-        const version = Vue.version[0];
+    install(app, options) {
 
-        if (!vm) {
-            vm = new Vue({
-                data() {
-                    return {
-                        current: '',
-                        locales: {}
-                    };
-                },
+        const state = Vue.reactive({
+            current: '',
+            locales: {}
+        })
 
-                computed: {
+        const text = (t) => {
+            const translations = state.locales[state.current]
+            return translations && translations[t] || t
+        }
+
+        const $translate = {
                     // Current selected language
                     lang() {
-                        return this.current;
+                        return state.current;
                     },
 
-                    // Current locale values
-                    locale() {
-                        if (!this.locales[this.current])
-                            return null;
-
-                        return this.locales[this.current];
-                    }
-                },
-
-                methods: {
                     // Set a language as current
                     setLang(val) {
-                        if (this.current !== val) {
-                            if (this.current === '') {
-                                this.$emit('language:init', val);
-                            } else {
-                                this.$emit('language:changed', val);
-                            }
-                        }
-
-                        this.current = val;
-
-                        this.$emit('language:modified', val);
+                        state.current = val;
                     },
 
                     // Set a locale tu use
@@ -53,34 +32,20 @@ const VueTranslate = {
                         if (!locales)
                             return;
 
-                        let newLocale = Object.create(this.locales);
-
                         for (let key in locales) {
-                            if (!newLocale[key])
-                                newLocale[key] = {};
+                            if (!state.locales[key])
+                                state.locales[key] = {};
 
-                            Vue.util.extend(newLocale[key], locales[key]);
+                            Object.assign(state.locales[key], locales[key]);
                         }
-
-                        this.locales = Object.create(newLocale);
-
-                        this.$emit('locales:loaded', locales);
                     },
 
-                    text(t) {
-                        if (this.locale && t in this.locale) {
-                            t = this.locale[t];
-                        }
-
-                        return t;
-                    },
+                    text,
 
                     textWithParams(t, params = null) {
-                        if (this.locale && t in this.locale) {
-                            t = this.locale[t];
-                        }
+                        t = text(t)
 
-                        if (!params || params === null || typeof params === 'undefined') {
+                        if (!this.params || this.params === null || typeof this.params === 'undefined') {
                             return t;
                         }
 
@@ -90,27 +55,24 @@ const VueTranslate = {
 
                         return t;
                     }
-                }
-            });
+            }
 
-            Vue.prototype.$translate = vm;
-        }
+            app.config.globalProperties.$translate = $translate;
 
         // Mixin to read locales and add the translation method and directive
-        Vue.mixin({
-            [version === '1' ? 'init' : 'beforeCreate']() {
-                this.$translate.setLocales(this.$options.locales);
+        app.mixin({
+            beforeCreate() {
+                $translate.setLocales(this.$options.locales);
             },
 
             methods: {
                 // An alias for the .$translate.text method
                 t(t, params) {
-                    return this.$translate.textWithParams(t, params);
+                    return $translate.textWithParams(t, params);
                 },
 
-                // backwards compatibility
                 tWithParams(t, params) {
-                    return this.$translate.textWithParams(t, params);
+                    return $translate.textWithParams(t, params);
                 }
             },
 
@@ -119,30 +81,19 @@ const VueTranslate = {
                     if (!el.$translateKey)
                         el.$translateKey = el.innerText;
 
-                    let text = this.$translate.text(el.$translateKey);
+                    let text = $translate.text(el.$translateKey);
 
                     el.innerText = text;
-                }.bind(vm)
+                }
             }
         });
 
         // Global method for loading locales
-        Vue.locales = (locales) => {
-            vm.$translate.setLocales(locales);
-        };
+        app.locales = $translate.setLocales;
 
         // Global method for setting languages
-        Vue.lang = (lang) => {
-            vm.$translate.setLang(lang);
-        };
+        app.lang = $translate.setLang;
     }
 };
 
-if (typeof exports === 'object') {
-    module.exports = VueTranslate; // CommonJS
-} else if (typeof define === 'function' && define.amd) {
-    define([], function () { return VueTranslate; }); // AMD
-} else if (window.Vue) {
-    window.VueTranslate = VueTranslate; // Browser (not required options)
-    Vue.use(VueTranslate);
-}
+export default VueTranslate;

@@ -1,6 +1,23 @@
-Vue.use(VueTranslate);
+import * as Vue from 'vue';
+import VueTranslate from '../src/vue-translate.js';
 
-Vue.component('sample-header', {
+const app = Vue.createApp({
+
+    created() {
+        this.$translate.setLang('en_US');
+    },
+
+    template: `<div>
+            <sample-header>Welcome to Vue Translate!</sample-header>
+
+            <sample-content></sample-content>
+        </div>`
+
+})
+
+app.use(VueTranslate);
+
+app.component('sample-header', {
     name: 'sample-header',
 
     locales: {
@@ -30,7 +47,7 @@ Vue.component('sample-header', {
         </header>`
 });
 
-Vue.component('sample-content', {
+app.component('sample-content', {
     name: 'sample-content',
 
     locales: {
@@ -88,16 +105,4 @@ Vue.component('sample-content', {
         </section>`
 })
 
-new Vue({
-
-    created() {
-        this.$translate.setLang('en_US');
-    },
-
-    template: `<div>
-            <sample-header>Welcome to Vue Translate!</sample-header>
-
-            <sample-content></sample-content>
-        </div>`
-
-}).$mount('#app');
+app.mount('#app');

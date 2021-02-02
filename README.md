@@ -1,10 +1,16 @@
 ## VueTranslate
 
-A VueJS (1.x, 2.0+) plugin for basic translations.
+A VueJS 3 plugin for basic translations.
 
 ### What is this?
 
 Is a plugin to handle basic translations for your components, it adds a mixin and a directive to handle it the most comfortable way.
+
+### What about vue-translate-plugin
+
+vue3translate is mostly compatible with [vue-translate-plugin](https://www.npmjs.com/package/vue-translate).
+
+Known incompatibility: events are not handled anymore
 
 ### Like Vue-i18n?
 
@@ -19,9 +25,7 @@ Just translations, it is that simple.
 import Vue from 'vue';
 import VueTranslate from 'vue-translate-plugin';
 
-Vue.use(VueTranslate);
-
-var myComp = Vue.extend({
+const myComp = Vue.createComponent({
 	template: `<div>
 	        {{ t('Hello World') }}
 	        <span v-translate>How are you?</span>
@@ -44,8 +48,7 @@ var myComp = Vue.extend({
     }
 });
 
-var vm = new Vue({
-	el: '#app',
+var vm = Vue.createApp({
 
 	components: {myComp},
 
@@ -53,6 +56,10 @@ var vm = new Vue({
 	    <my-comp></my-comp>
 	</div>`
 });
+app.use(VueTranslate);
+app.mount('#app');
+
+
 ```
 
 ## Usage
@@ -61,7 +68,7 @@ You can do this in three different ways:
 
 - A `locales` option in your component:
 ```js
-Vue.component({
+app.component({
 	...
 	locales: {
 		spanish: {
@@ -73,7 +80,7 @@ Vue.component({
 ```
 - Inside a component's method:
 ```js
-Vue.component({
+app.component({
 	methods: {
 		loadMysuperTranslation() {
 			this.$translate.setLocales({
@@ -87,9 +94,9 @@ Vue.component({
 ```
 - Globally when loading the plugin:
 ```js
-Vue.use(VueTranslate);
+app.use(VueTranslate);
 
-Vue.locales({
+app.locales({
 	spanish: {
 		'hello world': 'hola mundo'
 	}
@@ -100,23 +107,13 @@ Vue.locales({
 
 Use the `setLang` method of the `$translate` property, like this:
 ```js
-Vue.component({
+app.component({
 	methods: {
 		showAppInSpanish() {
 			this.$translate.setLang('spanish');
 		}
 	}
 });
-```
-
-### Events
-
-You can listen to custom events emitted by the `$translate` property:
-
-```js
-this.$translate.$on('language:changed', language => {
-	console.log('The user choose '+language);
-})
 ```
 
 ### Parameters
@@ -137,15 +134,3 @@ this.$translate.textWithParams('translation.string', {
 // Result
 'My name is Glenn. My brother is named John.'
 ```
-
-##### language:init
-When the first language is set.
-
-##### language:changed
-When the language to use was changed from the previous value.
-
-##### language:modified
-Everytime a language is changed, either is the first time or not.
-
-##### locales:loaded
-When locales are loaded either by any of the 3 options
